@@ -9,6 +9,8 @@ from __future__ import with_statement
 import time
 import Queue
 
+from progressbar import Bar, ETA, Percentage, ProgressBar, SimpleProgress
+
 from fabric.state import env
 from fabric.network import ssh
 from fabric.context_managers import settings
@@ -45,6 +47,9 @@ class JobQueue(object):
         self._finished = False
         self._closed = False
         self._debug = False
+
+        widgets = ['Running tasks: ', Percentage(), ' ', Bar(), ' ', SimpleProgress(), ETA()]
+        self.pbar = ProgressBar(widgets=widgets, maxval=self._num_of_jobs)
 
     def _all_alive(self):
         """
@@ -127,6 +132,8 @@ class JobQueue(object):
         if self._debug:
             print("Job queue starting.")
 
+        self.pbar.start()
+
         while len(self._running) < self._max:
             _advance_the_queue()
 
@@ -156,6 +163,8 @@ class JobQueue(object):
                 self._finished = True
             time.sleep(ssh.io_sleep)
 
+            self.pbar.update(len(self._completed))
+
         results = {}
         for job in self._completed:
             results[job.name] = {
@@ -168,6 +177,8 @@ class JobQueue(object):
                 results[datum['name']]['results'] = datum['result']
             except Queue.Empty:
                 break
+
+        self.pbar.finish()
 
         return results
 
