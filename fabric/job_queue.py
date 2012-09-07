@@ -163,7 +163,8 @@ class JobQueue(object):
                 self._finished = True
             time.sleep(ssh.io_sleep)
 
-            self.pbar.update(len(self._completed))
+            if len(self._completed):
+                self.pbar.update(len(self._completed))
 
         results = {}
         for job in self._completed:
