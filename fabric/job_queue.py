@@ -49,7 +49,7 @@ class JobQueue(object):
         self._debug = False
 
         widgets = ['Running tasks: ', Percentage(), ' ', Bar(), ' ', SimpleProgress(), ETA()]
-        self.pbar = ProgressBar(widgets=widgets, maxval=self._num_of_jobs)
+        self.pbar = ProgressBar(widgets=widgets)
 
     def _all_alive(self):
         """
@@ -91,6 +91,9 @@ class JobQueue(object):
         if not self._closed:
             self._queued.append(process)
             self._num_of_jobs += 1
+
+            self.pbar.maxval = self._num_of_jobs
+
             if self._debug:
                 print("job queue appended %s." % process.name)
 
@@ -163,8 +166,7 @@ class JobQueue(object):
                 self._finished = True
             time.sleep(ssh.io_sleep)
 
-            if len(self._completed):
-                self.pbar.update(len(self._completed))
+            self.pbar.update(len(self._completed))
 
         results = {}
         for job in self._completed:
